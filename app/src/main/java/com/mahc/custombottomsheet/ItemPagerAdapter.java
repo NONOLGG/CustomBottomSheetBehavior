@@ -7,9 +7,11 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import androidx.viewpager.widget.PagerAdapter;
+
 import com.mahc.custombottomsheet.R;
 
-public class ItemPagerAdapter extends android.support.v4.view.PagerAdapter {
+public class ItemPagerAdapter extends PagerAdapter {
 
     Context mContext;
     LayoutInflater mLayoutInflater;

@@ -4,18 +4,26 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.IntDef;
-import android.support.annotation.NonNull;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.v4.view.MotionEventCompat;
-import android.support.v4.view.NestedScrollingChild;
-import android.support.v4.view.ViewCompat;
-import android.support.v4.widget.ViewDragHelper;
+//import android.support.annotation.IntDef;
+//import android.support.annotation.NonNull;
+//import android.support.design.widget.CoordinatorLayout;
+//import android.support.v4.view.MotionEventCompat;
+//import android.support.v4.view.NestedScrollingChild;
+//import android.support.v4.view.ViewCompat;
+//import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.view.MotionEventCompat;
+import androidx.core.view.NestedScrollingChild;
+import androidx.core.view.ViewCompat;
+import androidx.customview.widget.ViewDragHelper;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -140,10 +148,10 @@ public class BottomSheetBehaviorGoogleMapsLike<V extends View> extends Coordinat
     public BottomSheetBehaviorGoogleMapsLike( Context context, AttributeSet attrs ) {
         super( context, attrs );
         TypedArray a = context.obtainStyledAttributes(attrs,
-                android.support.design.R.styleable.BottomSheetBehavior_Layout);
+                R.styleable.BottomSheetBehavior_Layout);
         setPeekHeight(a.getDimensionPixelSize(
-                android.support.design.R.styleable.BottomSheetBehavior_Layout_behavior_peekHeight, 0));
-        setHideable(a.getBoolean(android.support.design.R.styleable.BottomSheetBehavior_Layout_behavior_hideable, false));
+                R.styleable.BottomSheetBehavior_Layout_behavior_peekHeight, 0));
+        setHideable(a.getBoolean(R.styleable.BottomSheetBehavior_Layout_behavior_hideable, false));
         a.recycle();
 
         /**
@@ -276,29 +284,34 @@ public class BottomSheetBehaviorGoogleMapsLike<V extends View> extends Coordinat
 
     @Override
     public boolean onTouchEvent( CoordinatorLayout parent, V child, MotionEvent event ) {
-        if ( ! child.isShown() ) {
+        try {
+            if (!child.isShown()) {
+                return false;
+            }
+
+            int action = MotionEventCompat.getActionMasked(event);
+            if (mState == STATE_DRAGGING && action == MotionEvent.ACTION_DOWN) {
+                return true;
+            }
+
+            mViewDragHelper.processTouchEvent(event);
+
+            if (action == MotionEvent.ACTION_DOWN) {
+                reset();
+            }
+
+            // The ViewDragHelper tries to capture only the top-most View. We have to explicitly tell it
+            // to capture the bottom sheet in case it is not captured and the touch slop is passed.
+            if (action == MotionEvent.ACTION_MOVE && !mIgnoreEvents) {
+                if (Math.abs(mInitialY - event.getY()) > mViewDragHelper.getTouchSlop()) {
+                    mViewDragHelper.captureChildView(child, event.getPointerId(event.getActionIndex()));
+                }
+            }
+            return !mIgnoreEvents;
+        }catch (Exception e){
+            e.printStackTrace();
             return false;
         }
-
-        int action = MotionEventCompat.getActionMasked( event );
-        if ( mState == STATE_DRAGGING  &&  action == MotionEvent.ACTION_DOWN ) {
-            return true;
-        }
-
-        mViewDragHelper.processTouchEvent( event );
-
-        if ( action == MotionEvent.ACTION_DOWN ) {
-            reset();
-        }
-
-        // The ViewDragHelper tries to capture only the top-most View. We have to explicitly tell it
-        // to capture the bottom sheet in case it is not captured and the touch slop is passed.
-        if ( action == MotionEvent.ACTION_MOVE  &&  ! mIgnoreEvents ) {
-            if ( Math.abs(mInitialY - event.getY()) > mViewDragHelper.getTouchSlop() ) {
-                mViewDragHelper.captureChildView( child, event.getPointerId(event.getActionIndex()) );
-            }
-        }
-        return ! mIgnoreEvents;
     }
 
     @Override
